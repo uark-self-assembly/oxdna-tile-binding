@@ -1,0 +1,19 @@
+
+# your home dir
+HOME: '/home/krs028'
+
+# the parent dir where you want to store simulation output.
+# Each simulation creates a working directory in SIM_HOME
+SIM_HOME: '/home/krs028/self-assembly/simulations'
+
+# where oxDNA is stored
+OXDNA_HOME: '/home/krs028/self-assembly/oxdna-code/oxDNA'
+
+# where pyoxdna is stored
+PYOXDNA_HOME: '/home/krs028/self-assembly/oxDNA-simulations/newer-oxdna-tile-binding/pyoxdna'
+
+# email address for status updates
+EMAIL_ADDRESS: ''
+
+# set level for output of debug messages, 0 (least) to 5 (most)
+DEBUG_LEVEL: 5
