@@ -1,0 +1,2 @@
+10
+python /DNA_is_cool/Documents/oxDNA-simulations/newer-oxdna-tile-binding/tile_binding_auto_monitoring_light.py --sim_conf=oxDNA-simulation/Crisscross/1_bound/300-03/1_bound.txt --bonds=oxDNA-simulation/Crisscross/1_bound/bonds_1_bound.py --iterations=3000 --out_dir=oxDNA-simulation/Crisscross/1_bound/300-03/test

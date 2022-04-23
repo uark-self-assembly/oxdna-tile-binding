@@ -1,0 +1,9 @@
+sbatch
+#!/bin/bash
+#SBATCH --job-name=job_name
+#SBATCH -p gpu72
+#SBATCH --nodes=1
+#SBATCH --ntasks=6
+#SBATCH -t 72:00:00
+#SBATCH -o out_file
+cd "/scratch/$SLURM_JOB_ID"
