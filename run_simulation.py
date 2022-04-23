@@ -32,11 +32,10 @@ def relax(output_dir, step1, step2, test_config, max_attempts=-1):
     return relaxed_conf
 
 
-def launch_self(output_dir, input_conf, input_top, name_prefix, num_sims, num_steps, relax_steps, b_relax, b_MD, max_relax_attempts, GPUs):
+def launch_self(job_file, output_dir, input_conf, input_top, name_prefix, num_sims, num_steps, relax_steps, b_relax, b_MD, max_relax_attempts, GPUs):
     """ submits this script to be run on Razor 
     """
 
-    walltime='72:00:00'
     # walltime='3:00:00'
 
     input_conf   = os.path.abspath(input_conf)
@@ -52,15 +51,11 @@ def launch_self(output_dir, input_conf, input_top, name_prefix, num_sims, num_st
     GPU_use = f' --gpus={GPUs}' if GPUs > 0 else ""
     prefix = f' --prefix={name_prefix}' if name_prefix is not None else ""
     
-    command = f'python3 {current_file} --local --conf={input_conf} --top={input_top}{relax}{MD}{relax_steps}{sim_steps}{relax_attempts}{prefix}'
+    command = f'python3 {current_file} --conf={input_conf} --top={input_top}{relax}{MD}{relax_steps}{sim_steps}{relax_attempts}{prefix}'
     print_message(3, f"Command to launch simulations is '{command}'")
 
     launcher = JobLauncher(
-        email=EMAIL_ADDRESS,
-        queue='gpu72',
-        nodes=1,
-        ppn='6',
-        walltime=walltime,
+        in_file=job_file,
         command=command
     )
     
@@ -74,8 +69,8 @@ def launch_self(output_dir, input_conf, input_top, name_prefix, num_sims, num_st
             sim_name = f"{dir_name}_{datetime.now().timestamp()}"
             working_dir = output_dir
         else:
-            working_dir = os.path.join(SIM_HOME, sim_name)
             sim_name = f'pyoxdna_{datetime.now().timestamp()}'
+            working_dir = os.path.join(SIM_HOME, sim_name)
 
         print_message(3, f"Simulation number {i}: Working_dir is '{working_dir}'")
 
@@ -162,7 +157,7 @@ def display_help():
     print("and/or molecular dynamics simulation")
     print("\nUsage:")
     print("-h, --help\t\t\t\tDisplays this help message")
-    print("-l, --local\t\t\t\t[Optional] Run simulations locally")
+    print("-j <job_file>, --job_file=<job_file>\t\t[Optional] the job file to run the simulation with. Excluding this will run the program locally")
     print("-r, --relax\t\t\t\t[Optional] Run relaxation (before simulation if doing both)")
     print("-m, --md\t\t\t\t[Optional] Run molecular dynamics simulation")
     print("-c <conf_file>, --conf=<conf_file>\tInput configuration file (.conf or .dat)")
@@ -184,8 +179,8 @@ if __name__ == '__main__':
         # starts at the second element of argv since the first one is the script name
         # extraparams are extra arguments passed after all option/keywords are assigned
         # opts is a list containing the pair "option"/"value"
-        opts, extraparams = getopt.getopt(sys.argv[1:], "hlrmc:t:s:n:o:x:a:g:p:",
-                            ["help", "local", "relax", "md", "conf=", "top=", "num_sims=", "num_steps=", "output=", "relax_steps=", "max_relax=", "gpus=", "prefix="])
+        opts, extraparams = getopt.getopt(sys.argv[1:], "hrmj:c:t:s:n:o:x:a:g:p:",
+                            ["help", "relax", "md", "job_file=", "conf=", "top=", "num_sims=", "num_steps=", "output=", "relax_steps=", "max_relax=", "gpus=", "prefix="])
         #print 'Opts:',opts
         #print 'Extra parameters:',extraparams
     except:
@@ -196,7 +191,7 @@ if __name__ == '__main__':
     if len(opts) == 0:
         display_help()
 
-    b_local             = False
+    b_local             = True
     b_relax             = False
     b_MD                = False
     input_conf          = None
@@ -212,8 +207,9 @@ if __name__ == '__main__':
     for o,p in opts:
         if o in ['-h', '--help']:
             display_help()
-        elif o in ['-l', '--local']:
-            b_local = True
+        elif o in ['-j', '--job_file']:
+            b_local = False
+            job_file = p
         elif o in ['-r', '--relax']:
             b_relax = True
         elif o in ['-m', '--md']:
@@ -342,4 +338,4 @@ if __name__ == '__main__':
         main(output_dir, input_conf, input_top, prefix, num_steps, num_relax, b_relax, b_MD, max_relax_attempts, GPUs)
         
     else: # launch program in pbs script
-        launch_self(output_dir, input_conf, input_top, prefix, num_sims, num_steps, num_relax, b_relax, b_MD, max_relax_attempts, GPUs)
+        launch_self(job_file, output_dir, input_conf, input_top, prefix, num_sims, num_steps, num_relax, b_relax, b_MD, max_relax_attempts, GPUs)

@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import pdb
 from math import sqrt
 from pprint import pprint
 from signal import SIGTERM
@@ -53,6 +54,7 @@ def write_config(config, path):
 def read_config(config_file_name):
     """ reads config (dictionary) from input file at path """
     if not os.path.exists(config_file_name):
+        pdb.set_trace()
         print(f"Config file '{config_file_name}' cannot be found/accessed")
         return dict()
     else:

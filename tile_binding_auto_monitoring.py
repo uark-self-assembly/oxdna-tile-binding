@@ -1,30 +1,33 @@
-from genericpath import isdir
 import os
 import sys
 import time
-import json
+import subprocess
+from math import ceil
+from datetime import datetime
 from pyoxdna.analysis import analyze_bonds
 from utils import JobLauncher, SIM_HOME, EMAIL_ADDRESS
-from pyoxdna.utils import current_time
-import subprocess
-from datetime import datetime
 
-""" this runs and analyzes ONE simulation at a time """
-TESTING = False
+"""
+    This script runs an oxDNA simulation for STEPS steps, stopping when at least one of the
+    TARGET_BONDS have formed, or all of the STARTING_BONDS have dissolved. Bonds are analyzed
+    every ANALYZE_BONDS_INTERVAL steps. INPUT_CONF AND INPUT_TOP are the initial configuration
+    and topology files of the oxDNA simulation to run.
 
-SIM_STEPS_PER_RUN = 200 if TESTING else 50000
+    To launch the script, run
+        python tile_binding_auto_monitoring.py
+"""
 
-MAX_TRIES = 100
+INPUT_CONF = "/home/$user$/experiment/newer-oxdna-tile-binding/experiments/center_alone/relaxed.conf"
 
-INPUT_CONF = "/home/krs028/self-assembly/oxDNA-simulations/newer-oxdna-tile-binding/experiments/center_alone/relaxed.conf"
-INPUT_TOP = "/home/krs028/self-assembly/oxDNA-simulations/newer-oxdna-tile-binding/experiments/center_alone/experiment_center_alone.top"
+INPUT_TOP = "/home/$user$/experiment/newer-oxdna-tile-binding/experiments/center_alone/experiment_center_alone.top"
 
-# TODO get an input file that will work
-ANALYSIS_INPUT = "/home/krs028/self-assembly/oxDNA-simulations/newer-oxdna-tile-binding/analysis.input"
+ANALYZE_BONDS_INTERVAL = 10
 
-# bonds attaching tile to structure
+STEPS = ANALYZE_BONDS_INTERVAL * 100
+
+# list of [ID 1, ID 2] where each ID is the id of a nucleotide in INPUT_TOP
+# program exits when all of these bonds have dissolved
 STARTING_BONDS = [
-    # [ID 1, ID 2] where each ID is the id of a nucleotide in the topology file
     [944, 498],
     [945, 497],
     [946, 496],
@@ -32,7 +35,8 @@ STARTING_BONDS = [
     [948, 494]
 ]
 
-# this program exits when these bonds are formed
+# list of [ID 1, ID 2] where each ID is the id of a nucleotide in INPUT_TOP
+# program exits when any of these bonds are formed
 TARGET_BONDS = [
     [949, 576],
     [950, 575],
@@ -53,33 +57,43 @@ TARGET_BONDS = [
     [963, 635],
 ]
 
-# number of current child simulation process, used as an id
-SIM_ID = 0
+
+
+
+#
+# internal variables
+#
+ANALYSIS_INPUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "analysis.input")
+
+# number of seconds between checking if simulation is finished
+# scales with steps per sim, with 1 <= x <= 120
+MONITOR_SIM_COMPLETION = min(max(ANALYZE_BONDS_INTERVAL / 5000, 1), 120)
 
 def main(sim_dir):
-    global SIM_ID
     global INPUT_CONF
     global INPUT_TOP
-    global MAX_TRIES
+
+    max_tries = ceil(STEPS / ANALYZE_BONDS_INTERVAL)
 
     conf_file = INPUT_CONF
-    top_file = INPUT_TOP
     tile_still_bound, tile_is_attached = True, False
     counter = 0
 
-    while tile_still_bound and not tile_is_attached and counter < MAX_TRIES:
-        print(f"\nTIMESTEP {counter * SIM_STEPS_PER_RUN}")
-        # for child simulation process
-        output_dir = os.path.join(sim_dir, str(SIM_ID))
-        SIM_ID += 1
-        conf_file, trajectory_file = run_one(conf_file, top_file, output_dir)
+    while tile_still_bound and not tile_is_attached and counter <= max_tries:
+        print(f"\nTIMESTEP {counter * ANALYZE_BONDS_INTERVAL}")
 
-        tile_still_bound, tile_is_attached = analyze_simulation(trajectory_file, top_file)
+        # for child simulation process
+        output_dir = os.path.join(sim_dir, str(counter))
+        conf_file, trajectory_file = run_one(conf_file, INPUT_TOP, output_dir)
+
+        tile_still_bound, tile_is_attached = analyze_simulation(trajectory_file, INPUT_TOP)
 
         counter += 1
 
     if tile_is_attached:
         print("TILE IS ATTACHED!")
+    else:
+        print("TILE IS NOT ATTACHED :(")
 
 
 def same_pair(pair1, pair2):
@@ -165,7 +179,7 @@ def run_one(conf, top, output_dir):
     # wait for simulation to complete, signaled by subdirectory appearing
     subdirs = get_subdirectories(output_dir)
     while(len(subdirs) == 0):
-        time.sleep(1 if TESTING else 20)
+        time.sleep(MONITOR_SIM_COMPLETION)
         subdirs = get_subdirectories(output_dir)
 
     if(len(subdirs) != 1):
@@ -187,7 +201,7 @@ def run_one(conf, top, output_dir):
 # python run_simulation.py --conf experiments/center_alone/relaxed.conf --top experiments/center_alone/experiment_center_alone.top --md --num_steps 100000
 
 def to_simulation_command(conf, top, output_dir, steps=None):
-    return f"python /home/krs028/self-assembly/oxDNA-simulations/newer-oxdna-tile-binding/run_simulation.py --conf {conf} --top {top} --output {output_dir} --md --num_steps {steps or SIM_STEPS_PER_RUN}"
+    return f"python /home/$user$/experiment/newer-oxdna-tile-binding/run_simulation.py --conf {conf} --top {top} --output {output_dir} --md --num_steps {steps or ANALYZE_BONDS_INTERVAL}"
 
 def has_subdirectory(path):
     return len(get_subdirectories(path)) > 0
@@ -204,11 +218,7 @@ def launch_self():
     working_dir = os.path.join(SIM_HOME, sim_name)
 
     launcher = JobLauncher(
-        email=EMAIL_ADDRESS,
-        queue='gpu72',
-        nodes=1,
-        ppn='6',
-        walltime='72:00:00',
+        in_file="example.job",
         command=f'python3 {current_file} --dir {working_dir}'
     )
     

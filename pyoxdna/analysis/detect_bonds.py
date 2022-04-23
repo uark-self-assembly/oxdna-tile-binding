@@ -68,7 +68,7 @@ def print_progress( current, total, first=False ):
 	sys.stdout.flush()
 
 
-def analyze_bonds(input_file, trajectory_file, topology_file, include_starting_bonds=False):
+def analyze_bonds(input_file, trajectory_file, topology_file, include_starting_bonds=False, oxDNA_dir=None):
 	"""
 
 	input_file -- oxDNA input file
@@ -85,6 +85,8 @@ def analyze_bonds(input_file, trajectory_file, topology_file, include_starting_b
 		'bond_events': list of bond events (bonds breaking and forming)
 	}
 	"""
+	#print(f'input_file = {input_file}, trajectory_file = {trajectory_file}, topology_file = {topology_file}')
+	#print(f'include_starting_bonds = {include_starting_bonds}')
 
 	with open(trajectory_file, 'r') as f:
 		total_frames = f.read().count( 't = ' )
@@ -115,8 +117,13 @@ def analyze_bonds(input_file, trajectory_file, topology_file, include_starting_b
 		
 	# print_progress(0, total_frames, True)
 
+	if not oxDNA_dir is None:
+		DNAnalysis = f'{oxDNA_dir}/build/bin/DNAnalysis'
+	else:
+		DNAnalysis = 'DNAnalysis'
+
 	args = [
-		'DNAnalysis',
+		DNAnalysis,
 		input_file,
 		f'trajectory_file={temp_file.name}', 
 		'analysis_data_output_1 = { \n name = stdout \n print_every = 1 \n col_1 = { \n type=pair_energy \n} \n}'
@@ -125,6 +132,7 @@ def analyze_bonds(input_file, trajectory_file, topology_file, include_starting_b
 	prev_bonds = []
 
 	while system != False:
+
 
 		system.map_nucleotides_to_strands()
 		system.print_lorenzo_output(temp_file.name, '/dev/null')

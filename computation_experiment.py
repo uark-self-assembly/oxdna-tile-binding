@@ -160,11 +160,13 @@ def get_configs(top_file, conf_file, gpu=False):
         'conf_file': conf_file,
         'topology': top_file,
         'steps': '2000',
+	'lastconf_file': 'last.conf',
     }
     
     step2 = {
         'topology': top_file,
         'print_conf_interval': '50',
+	'lastconf_file': 'last.conf',
     }
 
     sim_config ={
@@ -229,6 +231,7 @@ def get_configs(top_file, conf_file, gpu=False):
         'print_conf_interval': 1e10,
         'print_energy_every': 1e10,
         'no_stdout_energy':1,
+        'lastconf_file': 'last.conf',
 
         'max_io': 20,
     }
@@ -287,15 +290,10 @@ def main(output_dir, num_strands, bases_per_strand, num_simulations, box_size, g
     rw.write_results(num_strands, avg_time_total, avg_time_process, gpu)
 
 
-def launch_self(start, end):
-    walltime='72:00:00'
-
+def launch_self(start, end, gpu, job_file):
+    
     launcher = JobLauncher(
-        email=EMAIL_ADDRESS,
-        queue='gpu72',
-        nodes=1,
-        ppn='6', 
-        walltime=walltime
+        in_file=job_file
     )
 
     for i in range(start, end):
@@ -309,7 +307,7 @@ def launch_self(start, end):
         launcher.launch_job(
             sim_name=sim_name,
             working_dir=working_dir,
-            command=f'python3 {current_file} run {num_strands} {working_dir}'
+            command=f'python3 {current_file} run {num_strands} {gpu} {working_dir}'
         )
     
 
@@ -321,14 +319,14 @@ if __name__ == '__main__':
     args = sys.argv[1:]
 
     if args[0] == 'run':
-        # usage python experiment.py run num_strands [output_dir]
+        # usage python experiment.py run num_strands gpu(True/False) [output_dir]
         box_size = 1000
-        gpu = True
+        gpu = args[2]
         bases_per_strand = 2
         num_strands = int(args[1])
         
         try:
-            output_dir = args[2]
+            output_dir = args[3]
         except:
             output_dir = '.'
 
@@ -346,5 +344,6 @@ if __name__ == '__main__':
         main(output_dir, num_strands, bases_per_strand, num_simulations, box_size, gpu)
 
     else:
-        # usage: python3 launch_experiment.py start end
-        launch_self(*[int(x) for x in args[:2]])
+        # usage: python3 launch_experiment.py start end gpu(True/False) example.job
+        launch_self(*[int(x) for x in args[:2]],args[2],args[3])
+

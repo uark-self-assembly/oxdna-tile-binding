@@ -3,7 +3,7 @@ import sys
 import time
 import json
 from pyoxdna.analysis import analyze_bonds
-from utils import JobLauncher, SIM_HOME, EMAIL_ADDRESS
+from utils import JobLauncher, SIM_HOME, EMAIL_ADDRESS, OXDNA_HOME
 from pyoxdna.utils import current_time
 
 """ this analyzes a simulation after it has completed """
@@ -13,7 +13,7 @@ def trim_strands(input_file, trajectory_file, top_file, output_top='output.top',
         output_top and output_traj that contain only strands that bind during the simulation.
         This makes it easier to see tile interaction in large simulations
     """    
-    bond_data = analyze_bonds(input_file, trajectory_file, top_file)
+    bond_data = analyze_bonds(input_file, trajectory_file, top_file, oxDNA_dir=OXDNA_HOME)
     bond_events = bond_data['bond_events'] # list of (time, base1, strand1, action, base2, strand2)
 
     with open('bond_data.json','w') as f:
@@ -82,16 +82,18 @@ def launch_self(args, sim_name=None):
         [directory]   
     """
 
-    if len(args) == 3: # python analyze run input trajectory top
+    if len(args) == 4: # python analyze run input trajectory top
         input_file = args[0]
         trajectory_file = args[1]
         top_file = args[2]
+        job_file = args[3]
 
-    elif len(args) == 1: # python analyze run directory
+    elif len(args) == 2: # python analyze run directory
         directory = args[0]
         input_file = os.path.join(directory, 'input.params')
         trajectory_file = os.path.join(directory, 'trajectory.dat')
         top_file = os.path.join(directory, 'input.top')
+        job_file = args[1]
 
     else: # invalid usage
         sys.exit()
@@ -104,17 +106,13 @@ def launch_self(args, sim_name=None):
     sim_name = sim_name or f'analysis_{current_time()}' 
 
     launcher = JobLauncher(
-        email=EMAIL_ADDRESS,
-        queue='gpu72',
-        nodes=1,
-        ppn='6', 
-        walltime=walltime,
-        command=f'python3 {current_file} run {input_file} {trajectory_file} {top_file}'
+	in_file=job_file,
+        command=f'python3 {current_file} {input_file} {trajectory_file} {top_file}'
     )
     launcher.launch_job(sim_name=sim_name, working_dir=os.path.join(SIM_HOME, sim_name))
 
 if __name__ == '__main__':
-    if sys.argv[1] == 'run':
-        trim_strands(input_file=sys.argv[2], trajectory_file=sys.argv[3], top_file=sys.argv[4])
+    if len(sys.argv) == 4:
+        trim_strands(input_file=sys.argv[1], trajectory_file=sys.argv[2], top_file=sys.argv[3])
     else:
         launch_self(sys.argv[1:])

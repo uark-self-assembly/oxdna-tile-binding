@@ -9,9 +9,9 @@ NOTE: all commands / programs run in a job must use the current working director
 specify the output_dir to change where the output is stored 
 This is because job_launcher.py uses different temporary and output directories in the backend
 
-python /home/krs028/oxDNA-simulations/kyle/mycode/launch_job.py
+python /home/user/oxDNA-simulations/kyle/mycode/launch_job.py
 
-    /home/krs028 (HOME)
+    /home/user (HOME)
         | --> oxdna-code/oxDNA (OXDNA_HOME)
         | --> results.csv
         | --> simulations

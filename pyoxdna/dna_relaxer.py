@@ -30,7 +30,6 @@ class DNARelaxer:
             @input testing_config config dictionary for testing relaxation outputs
             @input max_attempts integer to bound number of attempts, default -1 for no bound
         """
-
         print_message(5, "About to launch relax_process...")
         relax_process = self._launch_subprocess(self._relax, (rstep1, rstep2))
         print_message(5, "... relax_process launched")
