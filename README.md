@@ -96,28 +96,37 @@ A python package written by Kyle Sadler to interact with oxDNA in python. It has
 
 ### analyze.py
 This is a script for analyzing tile binding in oxDNA after simulation. Given input, topology, and trajectory files, analyze.trim_strands() creates a topology and trajectory files with ONLY the strands that bind during the simulation. This makes it easier to see strand interaction in a large simulation.
+
 *Run with*: `python analyze.py [input_file] [trajectory_file] [top_file] [job_file]`. If you would like to run locally, run without a job_file.
+
 Since we can compute simulation binding events (e.g. nucleotide1 binds to nucleotide2 at time t), this script can be improved to filter for binds with x or more bonds. Therefore, this can be used to automatically count the number of full tile binds in a simulation.
 Credit: this script is based on the work of Michael Sharp who worked on a similar project with Dr. Patitz a few years ago.
 
 ### computation_experiment.py 
 A script for measuring the runtime of a simulation used to investigate oxDNA’s computation profile. Results from the experiment found in [HOME]/results.txt
+
 *Run with*: `python computation_experiment.py run [num_strands] [GPU:True/False][output_dir (optional, default is SIM_HOME])]` to run the experiment with a specific number of strands or `python computation_experiment.py [start_num_strands] [end_num_strands] [GPU:True/False] [job_file]` to run the experiment with values in the range of  start_num_strands to end_num_strands.
 
 ### create_tiles.py
 A script to generate a grid of aligned tiles for simulation. This works by “copying and pasting” a conf and top file of two complementary tiles in order to make an x by y grid. Input files for this program can be found in oxdna_files/tiles/original. Output files can be found in oxdna_files/tiles.
-*Usage*: `python create_tiles.py run [file_name] [num_tiles] [output_dir]` to run
+
+*Run with*: `python create_tiles.py run [file_name] [num_tiles] [output_dir]` to run
 
 ### run_analysis_multi.py
 A small script to run other scripts for multiple iterations.
 Uses run_analysis.txt as input
+
 *Contents of run_analysis.txt*: 
+
 &emsp;First line: number of iterations to run
+
 &emsp;Second line: the string to run
+
 *Run with* `python run_analysis_multi.py`
 
 ### run_simulation.py
 This program runs a simulation given a config file, topology file. There are several options the user can choose for relaxation and simulation. 
+
 *Run with*: `python run_simulation.py -t [top_file] -c [conf_file] -j [job_file] -r` (this command will just preform relaxation)
 Only a topology file, a config file, and either the -r or -m flag  are required for run_simulation.py . To run locally, simply exclude the -j flag and the job_file. To see more configuration options, run `python run_simulation.py -h`.
 
