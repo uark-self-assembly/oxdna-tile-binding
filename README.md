@@ -58,6 +58,7 @@ A great visualization tool for oxDNA simulations is [Oxdna-viewer](https://sulcg
 This is a python module for easily launching jobs on Razor. Given a command, working_directory, dependencies, job file, etc., this module will automatically create a job script and submit a job to your computing cluster on your behalf. Documentation can be found in job_launcher.py and example usage can be found on line 120 in run_simulations.py.
 
 Many scripts allow the user to input a job_file.
+
 The job input file should have the command the script should be run with in the first line (for example `sbatch` for Slurm or `qsub` for PBS/Torque). In the following lines, users should put the job script they wish to run the program with. This job script should only have the system specific parameters including `[job_name]` and `[out_file]` as flags. All other job specific parameters (such as loading modules or running commands) will be formatted by job_launcher.py, and `[job_name]` and `[out_file]` will be replaced with the job appropriate data.
 Example of an input job script:
 ```
@@ -99,13 +100,15 @@ This is a script for analyzing tile binding in oxDNA after simulation. Given inp
 
 *Run with*: `python analyze.py [input_file] [trajectory_file] [top_file] [job_file]`. If you would like to run locally, run without a job_file.
 
-Since we can compute simulation binding events (e.g. nucleotide1 binds to nucleotide2 at time t), this script can be improved to filter for binds with x or more bonds. Therefore, this can be used to automatically count the number of full tile binds in a simulation.
+Since we can compute simulation binding events (e.g. nucleotide1 binds to nucleotide2 at time t), this script can be improved to filter for bonds with x or more bound nucleotides. Therefore, this can be used to automatically count the number of full tile bindings in a simulation.
 Credit: this script is based on the work of Michael Sharp who worked on a similar project with Dr. Patitz a few years ago.
 
 ### computation_experiment.py 
-A script for measuring the runtime of a simulation used to investigate oxDNA’s computation profile. Results from the experiment found in [HOME]/results.txt
+A script to profile the run time of oxDNA’s simulations using both the GPU and CPU based on the number of nucleotides in the simulations. Results from the experiment are found in [HOME]/results.txt
 
 *Run with*: `python computation_experiment.py run [num_strands] [GPU:True/False][output_dir (optional, default is SIM_HOME])]` to run the experiment with a specific number of strands or `python computation_experiment.py [start_num_strands] [end_num_strands] [GPU:True/False] [job_file]` to run the experiment with values in the range of  start_num_strands to end_num_strands.
+
+We recommend that the user run a range of sizes multiple times to determine which sizes of structures are best suited for GPU or CPU use.
 
 ### create_tiles.py
 A script to generate a grid of aligned tiles for simulation. This works by “copying and pasting” a conf and top file of two complementary tiles in order to make an x by y grid. Input files for this program can be found in oxdna_files/tiles/original. Output files can be found in oxdna_files/tiles.
